@@ -46,6 +46,67 @@ class Card:
     types: str
     text: str
 
+def check_name(card: Card) -> None:
+    name = card.name
+
+    if name.strip() == '':
+        print('Card does not have a name')
+        return
+
+    expected_name = ' '.join(part[0].upper() + part[1:].lower() for part in name.split())
+    if name != expected_name:
+        print(f'"{name}" expected to be "{expected_name}"')
+
+VALID_TYPES = {
+    'Action',
+    'Attack',
+    'Command',
+    'Curse',
+    'Doom',
+    'Duration',
+    'Fate',
+    'Heirloom',
+    'Night',
+    'Prize',
+    'Reaction',
+    'Reserve',
+    'Reward',
+    'Shadow',
+    'Shelter',
+    'Spirit',
+    'Traveller',
+    'Treasure',
+    'Victory',
+    'Zombie',
+
+    # custom types
+    'Spell',
+}
+
+def check_types(card: Card) -> None:
+    name = 'Card' if card.name == '' else card.name
+
+    if card.types.strip() == '':
+        print(f'{name} does not have types')
+        return
+
+    for t in card.types.split(' - '):
+        if t not in VALID_TYPES:
+            print(f'{name} has an invalid type "{t}"')
+
+def check_card(card: Card) -> None:
+    name = 'Card' if card.name == '' else card.name
+
+    check_name(card)
+
+    if card.cost.strip() == '':
+        print(f'{name} does not have a cost')
+
+    check_types(card)
+
+    if card.text.strip() == '':
+        print(f'{name} does not have text')
+
 def create_url_string(card: Card) -> str:
     types_list = [t.strip() for t in card.types.split('-')]
     primary_color: PrimaryColor|None = None
@@ -101,6 +162,9 @@ def main() -> None:
             fields = line.split('\t')
             card = Card(fields[0], fields[1], fields[2], fields[3])
             cards.append(card)
+
+    for card in cards:
+        check_card(card)
 
     card_url_list = [create_url_string(card) for card in cards]
     with open('dominion-card-generator.json', 'w') as f:
