@@ -45,6 +45,8 @@ class Card:
     cost: str
     types: str
     text: str
+    preview: str
+    heirloom: str
 
 def check_name(card: Card) -> None:
     name = card.name
@@ -134,8 +136,8 @@ def create_url_string(card: Card) -> str:
     url += '&credit='
     url += '&creator='
     url += '&price=' + urllib.parse.quote(card.cost)
-    url += '&preview='
-    url += '&type2='
+    url += '&preview=' + urllib.parse.quote(card.preview)
+    url += '&type2=' + urllib.parse.quote(card.heirloom)
     url += '&color2split=18'
     url += '&boldkeys='
     url += '&picture-x=0'
@@ -160,7 +162,7 @@ def main() -> None:
 
         for line in f:
             fields = line.split('\t')
-            card = Card(fields[0], fields[1], fields[2], fields[3])
+            card = Card(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
             cards.append(card)
 
     for card in cards:
