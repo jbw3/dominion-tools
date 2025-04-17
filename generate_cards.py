@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 import json
+import re
 import urllib.parse
 
 class PrimaryColor(IntEnum):
@@ -96,6 +97,28 @@ def check_types(card: Card) -> None:
         if t not in VALID_TYPES:
             print(f'{name} has an invalid type "{t}"')
 
+NOT_IN_SUPPLY_TEXT = '(This is not in the Supply.)'
+NOT_IN_SUPPLY_REGEX = r'\(?this is not in the supply\.?\)?'
+
+def check_text(card: Card) -> None:
+    name = 'Card' if card.name == '' else card.name
+
+    if card.text.strip() == '':
+        print(f'{name} does not have text')
+        return
+
+    m = re.search(NOT_IN_SUPPLY_REGEX, card.text, re.IGNORECASE)
+    if m is not None:
+        actual = m.group()
+        if actual != NOT_IN_SUPPLY_TEXT:
+            print(f'{name}: "{actual}" should be "{NOT_IN_SUPPLY_TEXT}"')
+
+    start = card.text.find(NOT_IN_SUPPLY_TEXT)
+    if start >= 0:
+        end = start + len(NOT_IN_SUPPLY_TEXT)
+        if start == 0 or card.text[start - 1] != '[' or end >= len(card.text) or card.text[end] != ']':
+            print(f'{name}: "{NOT_IN_SUPPLY_TEXT}" is not italicized')
+
 def check_card(card: Card) -> None:
     name = 'Card' if card.name == '' else card.name
 
@@ -105,9 +128,7 @@ def check_card(card: Card) -> None:
         print(f'{name} does not have a cost')
 
     check_types(card)
-
-    if card.text.strip() == '':
-        print(f'{name} does not have text')
+    check_text(card)
 
 def create_url_string(card: Card) -> str:
     types_list = [t.strip() for t in card.types.split('-')]
