@@ -60,6 +60,18 @@ def check_name(card: Card) -> None:
     if name != expected_name:
         print(f'"{name}" expected to be "{expected_name}"')
 
+COST_REGEX = re.compile(r'^(\$[0-9]+)?\^?(@[0-9]+)?\*?$')
+
+def check_cost(card: Card) -> None:
+    name = 'Card' if card.name == '' else card.name
+
+    if card.cost.strip() == '':
+        print(f'{name} does not have a cost')
+        return
+
+    if COST_REGEX.match(card.cost) is None:
+        print(f'{name} has an invalid cost: "{card.cost}"')
+
 VALID_TYPES = {
     'Action',
     'Attack',
@@ -98,7 +110,7 @@ def check_types(card: Card) -> None:
             print(f'{name} has an invalid type "{t}"')
 
 NOT_IN_SUPPLY_TEXT = '(This is not in the Supply.)'
-NOT_IN_SUPPLY_REGEX = r'\(?this is not in the supply\.?\)?'
+NOT_IN_SUPPLY_REGEX = re.compile(r'\(?this is not in the supply\.?\)?', re.IGNORECASE)
 
 def check_text(card: Card) -> None:
     name = 'Card' if card.name == '' else card.name
@@ -107,7 +119,7 @@ def check_text(card: Card) -> None:
         print(f'{name} does not have text')
         return
 
-    m = re.search(NOT_IN_SUPPLY_REGEX, card.text, re.IGNORECASE)
+    m = NOT_IN_SUPPLY_REGEX.search(card.text)
     if m is not None:
         actual = m.group()
         if actual != NOT_IN_SUPPLY_TEXT:
@@ -120,13 +132,8 @@ def check_text(card: Card) -> None:
             print(f'{name}: "{NOT_IN_SUPPLY_TEXT}" is not italicized')
 
 def check_card(card: Card) -> None:
-    name = 'Card' if card.name == '' else card.name
-
     check_name(card)
-
-    if card.cost.strip() == '':
-        print(f'{name} does not have a cost')
-
+    check_cost(card)
     check_types(card)
     check_text(card)
 
