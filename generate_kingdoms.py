@@ -9,6 +9,23 @@ def no_first_editions(card: dict[str, Any]) -> bool:
 def pick_expansions(card: dict[str, Any], expansions: set[str]) -> bool:
     return card['Set']['Name'] in expansions
 
+def card_comparison_key(card: dict[str, Any]) -> tuple[int, int, int, str]:
+    key = [0, 0, 0, card['Name']]
+
+    cost_str = card['Cost']
+    cost_split = cost_str.split()
+    for part in cost_split:
+        if part[0] == '$':
+            key[0] = int(part[1:])
+        elif part[-1] == 'P':
+            key[1] = 1 if len(part) == 1 else int(part[:-1])
+        elif part[-1] == 'D':
+            key[2] = 1 if len(part) == 1 else int(part[:-1])
+        else:
+            assert False, f'Unknown cost part: {part}'
+
+    return tuple(key)
+
 def main() -> None:
     cards_list_filename = 'dominion_cards.json'
     with open(cards_list_filename, 'r', encoding='utf8') as f:
@@ -20,6 +37,7 @@ def main() -> None:
         'Secret Passage',      # slows down games
         'Swindler',            # slows down games and can be annoying
         'Torturer',            # slows down games and can be annoying
+        'Lookout',             # slows down games
         "Philosopher's Stone", # slows down games
         'Possession',          # slows down games and can be annoying
         'Rabble',              # slows down games
@@ -29,11 +47,12 @@ def main() -> None:
         'Haunted Woods',       # slows down games
         'Ninja',               # slows down games
         'Black Market',        # setup is too complex
+        'Envoy',               # slows down games
     }
 
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
         no_first_editions,
-        lambda c: pick_expansions(c, {'Alchemy', 'Promo'}),
+        lambda c: pick_expansions(c, {'Alchemy', 'Empires'}),
         lambda c: c['Name'] not in tournament_exclude_cards,
     ]
 
@@ -48,6 +67,7 @@ def main() -> None:
 
     kingdom_cards = kingdom_card_options[:10]
 
+    kingdom_cards.sort(key=card_comparison_key)
     for card in kingdom_cards:
         print(f"{card['Name']} {card['Cost']}")
 
