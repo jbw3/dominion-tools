@@ -5,11 +5,14 @@ from typing import Any
 def create_card() -> dict[str, Any]:
     return {
         'Name': '',
-        'Set': '',
+        'Set': {
+            'Name': '',
+            'Edition': None,
+        },
         'Types': [],
     }
 
-BASIC_CARD_NAMES = {
+BASE_CARD_NAMES = {
     'Copper',
     'Silver',
     'Gold',
@@ -21,8 +24,8 @@ BASIC_CARD_NAMES = {
     'Province',
 }
 
-def is_basic_card(card: dict[str, Any]) -> bool:
-    return card['Name'] in BASIC_CARD_NAMES
+def is_base_card(card: dict[str, Any]) -> bool:
+    return card['Name'] in BASE_CARD_NAMES
 
 def is_non_supply_card(card: dict[str, Any]) -> bool:
     if card['Name'] in {'Horse'}:
@@ -77,7 +80,7 @@ class DominionCardsParser(HTMLParser):
         self.headers: list[str] = []
         self.current_card = create_card()
         self.cards: dict[str, list[dict[str, Any]]] = {
-            'Basic': [],
+            'Base': [],
             'Kingdom': [],
             'NonSupply': [],
             'Shelters': [],
@@ -112,8 +115,18 @@ class DominionCardsParser(HTMLParser):
             if self.is_header_row:
                 self.is_header_row = False
             else:
-                if is_basic_card(self.current_card):
-                    self.cards['Basic'].append(self.current_card)
+                name: str = self.current_card['Set']['Name']
+                if ',' in name:
+                    split = name.split(',')
+                    self.current_card['Set']['Name'] = split[0].strip()
+                    edition = split[1].strip()
+                    self.current_card['Set']['Edition'] = edition
+                    assert edition in {'1E', '2E'}, f'{edition} is not a valid edition'
+                else:
+                    self.current_card['Set']['Name'] = name.strip()
+
+                if is_base_card(self.current_card):
+                    self.cards['Base'].append(self.current_card)
                 elif is_non_supply_card(self.current_card):
                     self.cards['NonSupply'].append(self.current_card)
                 elif 'Shelter' in self.current_card['Types']:
@@ -162,7 +175,7 @@ class DominionCardsParser(HTMLParser):
                 case 'Name':
                     self.current_card['Name'] = data.strip()
                 case 'Set':
-                    self.current_card['Set'] += data
+                    self.current_card['Set']['Name'] += data
                 case 'Types':
                     self.current_card['Types'] = [t.strip() for t in data.split('-')]
         elif self.parsing_th:
