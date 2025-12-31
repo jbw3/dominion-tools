@@ -158,8 +158,12 @@ def create_url_string(card: Card) -> str:
     if secondary_color is None:
         secondary_color = SecondaryColor.SAME
 
+    # TODO: need a better way to do this
+    text = card.text.replace('  ', '\n')
+    text = text.replace(' - ', '\n-\n')
+
     url = '?title=' + urllib.parse.quote(card.name)
-    url += '&description=' + urllib.parse.quote(card.text)
+    url += '&description=' + urllib.parse.quote(text)
     url += '&type=' + urllib.parse.quote(card.types)
     url += '&credit='
     url += '&creator='
