@@ -10,6 +10,7 @@ def create_card() -> dict[str, Any]:
             'Edition': None,
         },
         'Types': [],
+        'Cost': '',
     }
 
 BASE_CARD_NAMES = {
@@ -106,6 +107,14 @@ class DominionCardsParser(HTMLParser):
             self.parsing_th = True
         elif tag == 'td':
             self.parsing_td = True
+        elif tag == 'img':
+            column_name = self.headers[self.column_index]
+            if column_name == 'Cost':
+                for name, value in attrs:
+                    if name == 'alt' and value is not None:
+                        if self.current_card['Cost'] != '':
+                            self.current_card['Cost'] += ' '
+                        self.current_card['Cost'] += value
 
     def handle_endtag(self, tag: str) -> None:
         if tag == 'table':
