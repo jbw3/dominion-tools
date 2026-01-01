@@ -201,7 +201,7 @@ class DominionCardsParser(HTMLParser):
                 case 'Text':
                     column_name = self.headers[self.column_index]
                     if column_name == 'Text':
-                        self.current_card['Text'] += data.replace('\u00a0', ' ')
+                        self.current_card['Text'] += data.replace('\u00a0', ' ').replace('\u200a', '').replace('\u2013', '-').replace('\u2019', "'")
         elif self.parsing_th:
             self.headers.append(data.strip())
 
