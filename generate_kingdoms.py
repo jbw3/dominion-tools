@@ -34,7 +34,7 @@ def card_comparison_key(card: dict[str, Any]) -> tuple[int, int, int, str]:
 
     return tuple(key)
 
-def generate_kingdom(cards: dict[str, Any]) -> Game:
+def generate_kingdom(cards: dict[str, Any], expansions: set[str]) -> Game:
     tournament_exclude_cards = {
         'Bureaucrat',          # not exciting
         'Militia',             # slows down games
@@ -67,7 +67,7 @@ def generate_kingdom(cards: dict[str, Any]) -> Game:
 
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
         no_first_editions,
-        lambda c: pick_expansions(c, {'Cornucopia & Guilds'}),
+        lambda c: pick_expansions(c, expansions),
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
@@ -92,9 +92,23 @@ def main() -> None:
     with open(cards_list_filename, 'r', encoding='utf8') as f:
         cards: dict[str, Any] = json.load(f)
 
-    game = generate_kingdom(cards)
-    for card in game.kingdom_cards:
-        print(f"{card['Name']} {card['Cost']}")
+    game_expansions = [
+        ['Base', 'Adventures'],
+        ['Intrigue', 'Prosperity'],
+        ['Seaside', 'Rising Sun'],
+    ]
+
+    game_num = 1
+    for expansions in game_expansions:
+        game = generate_kingdom(cards, set(expansions))
+
+        expansion_names = ', '.join(expansions)
+        print(f'Game {game_num} ({expansion_names}):')
+        for card in game.kingdom_cards:
+            print(f"{card['Name']} {card['Cost']}")
+        print()
+
+        game_num += 1
 
 if __name__ == '__main__':
     main()
