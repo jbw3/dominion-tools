@@ -71,11 +71,12 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str]) -> Game:
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
-    kingdom_card_options = [
-        card
-        for card in cards['Kingdom']
-        if all(rule(card) for rule in kingdom_rules)
-    ]
+    kingdom_card_options = []
+    for card_name in cards['Kingdom']:
+        card = cards['CardShapedThings'][card_name]
+        if all(rule(card) for rule in kingdom_rules):
+            kingdom_card_options.append(card)
+
     assert len(kingdom_card_options) >= 10
 
     random.shuffle(kingdom_card_options)

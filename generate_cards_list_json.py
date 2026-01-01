@@ -80,7 +80,8 @@ class DominionCardsParser(HTMLParser):
         self.column_index = 0
         self.headers: list[str] = []
         self.current_card = create_card()
-        self.cards: dict[str, list[dict[str, Any]]] = {
+        self.cards: dict[str, Any] = {
+            'CardShapedThings': {},
             'Base': [],
             'Kingdom': [],
             'NonSupply': [],
@@ -124,51 +125,56 @@ class DominionCardsParser(HTMLParser):
             if self.is_header_row:
                 self.is_header_row = False
             else:
-                name: str = self.current_card['Set']['Name']
-                if ',' in name:
-                    split = name.split(',')
+                set_name: str = self.current_card['Set']['Name']
+                if ',' in set_name:
+                    split = set_name.split(',')
                     self.current_card['Set']['Name'] = split[0].strip()
                     edition = split[1].strip()
                     self.current_card['Set']['Edition'] = edition
                     assert edition in {'1E', '2E'}, f'{edition} is not a valid edition'
                 else:
-                    self.current_card['Set']['Name'] = name.strip()
+                    self.current_card['Set']['Name'] = set_name.strip()
+
+                card_name = self.current_card['Name']
 
                 if is_base_card(self.current_card):
-                    self.cards['Base'].append(self.current_card)
+                    self.cards['Base'].append(card_name)
                 elif is_non_supply_card(self.current_card):
-                    self.cards['NonSupply'].append(self.current_card)
+                    self.cards['NonSupply'].append(card_name)
                 elif 'Shelter' in self.current_card['Types']:
-                    self.cards['Shelters'].append(self.current_card)
+                    self.cards['Shelters'].append(card_name)
                 elif 'Ruins' in self.current_card['Types']:
-                    self.cards['Ruins'].append(self.current_card)
+                    self.cards['Ruins'].append(card_name)
                 elif self.current_card['Types'][0] == 'Event':
-                    self.cards['Events'].append(self.current_card)
+                    self.cards['Events'].append(card_name)
                 elif self.current_card['Types'][0] == 'Landmark':
-                    self.cards['Landmarks'].append(self.current_card)
+                    self.cards['Landmarks'].append(card_name)
                 elif 'Heirloom' in self.current_card['Types']:
-                    self.cards['Heirlooms'].append(self.current_card)
+                    self.cards['Heirlooms'].append(card_name)
                 elif self.current_card['Types'][0] == 'Boon':
-                    self.cards['Boons'].append(self.current_card)
+                    self.cards['Boons'].append(card_name)
                 elif self.current_card['Types'][0] == 'Hex':
-                    self.cards['Hexes'].append(self.current_card)
+                    self.cards['Hexes'].append(card_name)
                 elif self.current_card['Types'][0] == 'State':
-                    self.cards['States'].append(self.current_card)
+                    self.cards['States'].append(card_name)
                 elif self.current_card['Types'][0] == 'Project':
-                    self.cards['Projects'].append(self.current_card)
+                    self.cards['Projects'].append(card_name)
                 elif self.current_card['Types'][0] == 'Artifact':
-                    self.cards['Artifacts'].append(self.current_card)
+                    self.cards['Artifacts'].append(card_name)
                 elif self.current_card['Types'][0] == 'Way':
-                    self.cards['Ways'].append(self.current_card)
+                    self.cards['Ways'].append(card_name)
                 elif self.current_card['Types'][0] == 'Ally':
-                    self.cards['Allies'].append(self.current_card)
+                    self.cards['Allies'].append(card_name)
                 elif self.current_card['Types'][0] == 'Trait':
-                    self.cards['Traits'].append(self.current_card)
+                    self.cards['Traits'].append(card_name)
                 elif self.current_card['Types'][0] == 'Prophecy':
-                    self.cards['Prophecies'].append(self.current_card)
+                    self.cards['Prophecies'].append(card_name)
                 else:
                     assert_kingdom_card_types(self.current_card['Types'])
-                    self.cards['Kingdom'].append(self.current_card)
+                    self.cards['Kingdom'].append(card_name)
+
+                self.cards['CardShapedThings'][card_name] = self.current_card
+
                 self.current_card = create_card()
         elif tag == 'th':
             self.parsing_th = False
