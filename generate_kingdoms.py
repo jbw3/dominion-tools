@@ -1,6 +1,11 @@
+from dataclasses import dataclass
 import json
 import random
 from typing import Any, Callable
+
+@dataclass
+class Game:
+    kingdom_cards: list[dict[str, Any]]
 
 def no_first_editions(card: dict[str, Any]) -> bool:
     edition = card['Set']['Edition']
@@ -26,11 +31,7 @@ def card_comparison_key(card: dict[str, Any]) -> tuple[int, int, int, str]:
 
     return tuple(key)
 
-def main() -> None:
-    cards_list_filename = 'dominion_cards.json'
-    with open(cards_list_filename, 'r', encoding='utf8') as f:
-        cards: dict[str, Any] = json.load(f)
-
+def generate_kingdom(cards: dict[str, Any]) -> Game:
     tournament_exclude_cards = {
         'Bureaucrat',          # not exciting
         'Militia',             # slows down games
@@ -79,7 +80,17 @@ def main() -> None:
     kingdom_cards = kingdom_card_options[:10]
 
     kingdom_cards.sort(key=card_comparison_key)
-    for card in kingdom_cards:
+
+    game = Game(kingdom_cards)
+    return game
+
+def main() -> None:
+    cards_list_filename = 'dominion_cards.json'
+    with open(cards_list_filename, 'r', encoding='utf8') as f:
+        cards: dict[str, Any] = json.load(f)
+
+    game = generate_kingdom(cards)
+    for card in game.kingdom_cards:
         print(f"{card['Name']} {card['Cost']}")
 
 if __name__ == '__main__':
