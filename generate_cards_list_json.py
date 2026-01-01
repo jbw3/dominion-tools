@@ -117,6 +117,10 @@ class DominionCardsParser(HTMLParser):
                         if self.current_card['Cost'] != '':
                             self.current_card['Cost'] += ' '
                         self.current_card['Cost'] += value
+            elif column_name == 'Text':
+                for name, value in attrs:
+                    if name == 'alt' and value is not None:
+                        self.current_card['Text'] += value
 
     def handle_endtag(self, tag: str) -> None:
         if tag == 'table':
@@ -197,7 +201,7 @@ class DominionCardsParser(HTMLParser):
                 case 'Text':
                     column_name = self.headers[self.column_index]
                     if column_name == 'Text':
-                        self.current_card['Text'] += data
+                        self.current_card['Text'] += data.replace('\u00a0', ' ')
         elif self.parsing_th:
             self.headers.append(data.strip())
 
