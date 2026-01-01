@@ -21,7 +21,10 @@ def card_comparison_key(card: dict[str, Any]) -> tuple[int, int, int, str]:
     cost_split = cost_str.split()
     for part in cost_split:
         if part[0] == '$':
-            key[0] = int(part[1:])
+            s = part[1:]
+            if s[-1] in {'*', '+'}:
+                s = s[:-1]
+            key[0] = int(s)
         elif part[-1] == 'P':
             key[1] = 1 if len(part) == 1 else int(part[:-1])
         elif part[-1] == 'D':
@@ -64,7 +67,7 @@ def generate_kingdom(cards: dict[str, Any]) -> Game:
 
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
         no_first_editions,
-        lambda c: pick_expansions(c, {'Alchemy', 'Adventures'}),
+        lambda c: pick_expansions(c, {'Cornucopia & Guilds'}),
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
