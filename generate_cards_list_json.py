@@ -30,14 +30,11 @@ def is_base_card(card: dict[str, Any]) -> bool:
     return card['Name'] in BASE_CARD_NAMES
 
 def is_non_supply_card(card: dict[str, Any]) -> bool:
-    if card['Name'] in {'Horse'}:
-        return True
-
     for t in card['Types']:
-        if t in {'Loot', 'Prize', 'Reward', 'Spirit', 'Zombie'}:
+        if t == 'Loot':
             return True
 
-    return False
+    return '(This is not in the Supply.)' in card['Text']
 
 VALID_KINGDOM_CARD_TYPES = {
     'Action',
@@ -91,6 +88,7 @@ class DominionCardsParser(HTMLParser):
             'Events': [],
             'Landmarks': [],
             'Heirlooms': [],
+            'Zombies': [],
             'Boons': [],
             'Hexes': [],
             'States': [],
@@ -156,6 +154,8 @@ class DominionCardsParser(HTMLParser):
                     self.cards['Landmarks'].append(card_name)
                 elif 'Heirloom' in self.current_card['Types']:
                     self.cards['Heirlooms'].append(card_name)
+                elif 'Zombie' in self.current_card['Types']:
+                    self.cards['Zombies'].append(card_name)
                 elif self.current_card['Types'][0] == 'Boon':
                     self.cards['Boons'].append(card_name)
                 elif self.current_card['Types'][0] == 'Hex':
