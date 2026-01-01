@@ -40,9 +40,12 @@ def main() -> None:
         'Lookout',             # slows down games
         "Philosopher's Stone", # slows down games
         'Possession',          # slows down games and can be annoying
+        'Clerk',               # slows down games
         'Rabble',              # slows down games
+        'Vault',               # slows down games
         'Advisor',             # slows down games
         'Footpad',             # slows down games
+        'Jester',              # slows down games
         'Giant',               # slows down games and can be annoying
         'Haunted Woods',       # slows down games
         'Ninja',               # slows down games
@@ -50,10 +53,18 @@ def main() -> None:
         'Envoy',               # slows down games
     }
 
+    adventure_token_cards = {
+        'Bridge Troll',
+        'Giant',
+        'Peasant',
+        'Ranger',
+        'Relic',
+    }
+
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
         no_first_editions,
-        lambda c: pick_expansions(c, {'Alchemy', 'Empires'}),
-        lambda c: c['Name'] not in tournament_exclude_cards,
+        lambda c: pick_expansions(c, {'Alchemy', 'Adventures'}),
+        lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
     kingdom_card_options = [
