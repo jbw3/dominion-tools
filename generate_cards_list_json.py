@@ -11,6 +11,7 @@ def create_card() -> dict[str, Any]:
         },
         'Types': [],
         'Cost': '',
+        'Text': '',
     }
 
 BASE_CARD_NAMES = {
@@ -193,6 +194,10 @@ class DominionCardsParser(HTMLParser):
                     self.current_card['Set']['Name'] += data
                 case 'Types':
                     self.current_card['Types'] = [t.strip() for t in data.split('-')]
+                case 'Text':
+                    column_name = self.headers[self.column_index]
+                    if column_name == 'Text':
+                        self.current_card['Text'] += data
         elif self.parsing_th:
             self.headers.append(data.strip())
 
