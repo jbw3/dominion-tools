@@ -99,6 +99,7 @@ def main() -> None:
         ['Base', 'Adventures'],
         ['Intrigue', 'Prosperity'],
         ['Seaside', 'Rising Sun'],
+        ['Empires', 'Nocturne'],
     ]
 
     game_num = 1
@@ -108,7 +109,8 @@ def main() -> None:
         expansion_names = ', '.join(expansions)
         print(f'Game {game_num} ({expansion_names}):')
         for pile in game.kingdom_piles:
-            print(f"{pile['Name']}")
+            costs = '/'.join(cards['CardShapedThings'][card_name]['Cost'] for card_name in pile['Cards'])
+            print(f"{pile['Name']} {costs}")
         print()
 
         game_num += 1

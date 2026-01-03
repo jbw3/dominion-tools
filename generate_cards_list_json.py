@@ -68,8 +68,64 @@ def assert_kingdom_card_types(types: list[str]) -> None:
     for t in types:
         assert t in VALID_KINGDOM_CARD_TYPES, f'{t} is not a valid kingdom card type'
 
+SPLIT_PILE_NAMES = {
+    'Avanto': 'Sauna/Avanto',
+    'Bustling Village': 'Settlers/Bustling Village',
+    'Catapult': 'Catapult/Rocks',
+    'Emporium': 'Patrician/Emporium',
+    'Encampment': 'Encampment/Plunder',
+    'Fortune': 'Gladiator/Fortune',
+    'Gladiator': 'Gladiator/Fortune',
+    'Patrician': 'Patrician/Emporium',
+    'Plunder': 'Encampment/Plunder',
+    'Rocks': 'Catapult/Rocks',
+    'Sauna': 'Sauna/Avanto',
+    'Settlers': 'Settlers/Bustling Village',
+}
+
+SPLIT_PILE_TYPES = {
+    'Augur': 'Augurs',
+    'Castle': 'Castles',
+    'Clash': 'Clashes',
+    'Fort': 'Forts',
+    'Knight': 'Knights',
+    'Odyssey': 'Odysseys',
+    'Townsfolk': 'Townsfolk',
+    'Wizard': 'Wizards',
+}
+
 def get_pile_name(card: dict[str, Any]) -> str:
+    name = SPLIT_PILE_NAMES.get(card['Name'])
+    if name is not None:
+        return name
+
+    for type in card['Types']:
+        name = SPLIT_PILE_TYPES.get(type)
+        if name is not None:
+            return name
+
     return card['Name']
+
+def card_comparison_key(card_name: str, cards: dict[str, Any]) -> tuple[int, int, int, str]:
+    card = cards['CardShapedThings'][card_name]
+    key = [0, 0, 0, card['Name']]
+
+    cost_str = card['Cost']
+    cost_split = cost_str.split()
+    for part in cost_split:
+        if part[0] == '$':
+            s = part[1:]
+            if s[-1] in {'*', '+'}:
+                s = s[:-1]
+            key[0] = int(s)
+        elif part[-1] == 'P':
+            key[1] = 1 if len(part) == 1 else int(part[:-1])
+        elif part[-1] == 'D':
+            key[2] = 1 if len(part) == 1 else int(part[:-1])
+        else:
+            assert False, f'Unknown cost part: {part}'
+
+    return tuple(key)
 
 class DominionCardsParser(HTMLParser):
     def __init__(self):
@@ -143,6 +199,7 @@ class DominionCardsParser(HTMLParser):
                     self.current_card['Set']['Name'] = set_name.strip()
 
                 card_name = self.current_card['Name']
+                self.cards['CardShapedThings'][card_name] = self.current_card
 
                 if is_base_card(self.current_card):
                     self.cards['Base'].append(card_name)
@@ -187,11 +244,11 @@ class DominionCardsParser(HTMLParser):
                             'Name': pile_name,
                             'Cards': [],
                         }
+                        self.piles[pile_name] = pile
                         self.cards['KingdomPiles'].append(pile)
 
                     pile['Cards'].append(card_name)
-
-                self.cards['CardShapedThings'][card_name] = self.current_card
+                    pile['Cards'].sort(key=lambda card_name: card_comparison_key(card_name, self.cards))
 
                 self.current_card = create_card()
         elif tag == 'th':
