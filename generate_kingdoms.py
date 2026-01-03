@@ -101,6 +101,10 @@ def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
 <head>
 <title>Dominion Games</title>
 <style>
+body {
+  background-image: url(1024px-BaseArt.jpg);
+  background-attachment: fixed;
+}
 h1 {
   text-align: center;
   font-family: "Times New Roman";
@@ -134,7 +138,7 @@ h1 {
                 f.write(f'  <div><a href="{link}"><img alt="{pile_name}" src="{image}"/></a></div>\n')
             f.write('</div>\n')
 
-        f.write('</body>\n</html>\n')
+        f.write('\n</body>\n</html>\n')
 
 def main() -> None:
     cards_list_filename = 'dominion_cards.json'
