@@ -128,8 +128,9 @@ h1 {
                 pile_name = pile['Name']
                 top_card_name = pile['Cards'][0]
                 top_card = cards['CardShapedThings'][top_card_name]
+                link = top_card['Link']
                 image = top_card['Image']
-                f.write(f'  <div><img alt="{pile_name}" src="{image}"/></div>\n')
+                f.write(f'  <div><a href="{link}"><img alt="{pile_name}" src="{image}"/></a></div>\n')
             f.write('</div>\n')
 
         f.write('</body>\n</html>\n')
@@ -143,6 +144,7 @@ def main() -> None:
         ['Base', 'Adventures'],
         ['Intrigue', 'Prosperity'],
         ['Seaside', 'Rising Sun'],
+        ['Alchemy', 'Promo'],
         ['Empires', 'Nocturne'],
     ]
 
