@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 @dataclass
 class Game:
-    kingdom_cards: list[dict[str, Any]]
+    kingdom_piles: list[dict[str, Any]]
 
 def no_first_editions(card: dict[str, Any]) -> bool:
     edition = card['Set']['Edition']
@@ -14,10 +14,13 @@ def no_first_editions(card: dict[str, Any]) -> bool:
 def pick_expansions(card: dict[str, Any], expansions: set[str]) -> bool:
     return card['Set']['Name'] in expansions
 
-def card_comparison_key(card: dict[str, Any]) -> tuple[int, int, int, str]:
-    key = [0, 0, 0, card['Name']]
+def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[int, int, int, str]:
+    top_card_name = pile['Cards'][0]
+    top_card = cards['CardShapedThings'][top_card_name]
 
-    cost_str = card['Cost']
+    key = [0, 0, 0, top_card['Name']]
+
+    cost_str = top_card['Cost']
     cost_split = cost_str.split()
     for part in cost_split:
         if part[0] == '$':
@@ -71,21 +74,20 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str]) -> Game:
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
-    kingdom_card_options = []
-    for card_name in cards['Kingdom']:
-        card = cards['CardShapedThings'][card_name]
-        if all(rule(card) for rule in kingdom_rules):
-            kingdom_card_options.append(card)
+    kingdom_pile_options = []
+    for pile in cards['KingdomPiles']:
+        if all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
+            kingdom_pile_options.append(pile)
 
-    assert len(kingdom_card_options) >= 10
+    assert len(kingdom_pile_options) >= 10
 
-    random.shuffle(kingdom_card_options)
+    random.shuffle(kingdom_pile_options)
 
-    kingdom_cards = kingdom_card_options[:10]
+    kingdom_piles = kingdom_pile_options[:10]
 
-    kingdom_cards.sort(key=card_comparison_key)
+    kingdom_piles.sort(key=lambda pile: pile_comparison_key(pile, cards))
 
-    game = Game(kingdom_cards)
+    game = Game(kingdom_piles)
     return game
 
 def main() -> None:
@@ -105,8 +107,8 @@ def main() -> None:
 
         expansion_names = ', '.join(expansions)
         print(f'Game {game_num} ({expansion_names}):')
-        for card in game.kingdom_cards:
-            print(f"{card['Name']} {card['Cost']}")
+        for pile in game.kingdom_piles:
+            print(f"{pile['Name']}")
         print()
 
         game_num += 1

@@ -68,6 +68,9 @@ def assert_kingdom_card_types(types: list[str]) -> None:
     for t in types:
         assert t in VALID_KINGDOM_CARD_TYPES, f'{t} is not a valid kingdom card type'
 
+def get_pile_name(card: dict[str, Any]) -> str:
+    return card['Name']
+
 class DominionCardsParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -78,10 +81,11 @@ class DominionCardsParser(HTMLParser):
         self.column_index = 0
         self.headers: list[str] = []
         self.current_card = create_card()
+        self.piles: dict[str, dict[str, Any]] = {}
         self.cards: dict[str, Any] = {
             'CardShapedThings': {},
             'Base': [],
-            'Kingdom': [],
+            'KingdomPiles': [],
             'NonSupply': [],
             'Shelters': [],
             'Ruins': [],
@@ -176,7 +180,16 @@ class DominionCardsParser(HTMLParser):
                     self.cards['Prophecies'].append(card_name)
                 else:
                     assert_kingdom_card_types(self.current_card['Types'])
-                    self.cards['Kingdom'].append(card_name)
+                    pile_name = get_pile_name(self.current_card)
+                    pile = self.piles.get(pile_name)
+                    if pile is None:
+                        pile = {
+                            'Name': pile_name,
+                            'Cards': [],
+                        }
+                        self.cards['KingdomPiles'].append(pile)
+
+                    pile['Cards'].append(card_name)
 
                 self.cards['CardShapedThings'][card_name] = self.current_card
 
