@@ -2,4 +2,4 @@
 *.json
 *.tsv
 list_of_cards_files
-list_of_cards.html
+*.html

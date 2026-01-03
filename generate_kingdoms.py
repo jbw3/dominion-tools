@@ -93,6 +93,40 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles:
     game = Game(kingdom_piles)
     return game
 
+def write_html(games: list[Game], filename: str) -> None:
+    with open(filename, 'w', encoding='utf8') as f:
+        f.write('''<!DOCTYPE html>
+<html>
+<head>
+<title>Dominion Games</title>
+<style>
+.cards_row {
+  display: grid;
+  grid-template-columns: 210px 210px 210px 210px 210px;
+}
+.cards_row div {
+  padding: 10px;
+}
+</style>
+</head>
+
+<body>
+''')
+
+        for i, game in enumerate(games):
+            f.write(f'\n<h1>Game {i + 1}</h1>\n\n')
+            ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
+            f.write('<div class="cards_row">\n')
+            for pile in ordered_piles:
+                pile_name = pile['Name']
+                top_card = pile['Cards'][0]
+                img_path = f'./list_of_cards_files/200px-{top_card}.jpg'.replace(' ', '_')
+                # f.write(f'  <div>{pile_name}</div>\n')
+                f.write(f'  <div><img alt="{pile_name}" src="{img_path}"/></div>\n')
+            f.write('</div>\n')
+
+        f.write('</body>\n</html>\n')
+
 def main() -> None:
     cards_list_filename = 'dominion_cards.json'
     with open(cards_list_filename, 'r', encoding='utf8') as f:
@@ -106,9 +140,11 @@ def main() -> None:
     ]
 
     game_num = 1
+    games: list[Game] = []
     exclude_piles: set[str] = set()
     for expansions in game_expansions:
         game = generate_kingdom(cards, set(expansions), exclude_piles)
+        games.append(game)
 
         expansion_names = ', '.join(expansions)
         print(f'Game {game_num} ({expansion_names}):')
@@ -120,6 +156,8 @@ def main() -> None:
         exclude_piles |= set(pile['Name'] for pile in game.kingdom_piles)
 
         game_num += 1
+
+    write_html(games, 'games.html')
 
 if __name__ == '__main__':
     main()
