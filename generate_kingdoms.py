@@ -93,7 +93,7 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles:
     game = Game(kingdom_piles)
     return game
 
-def write_html(games: list[Game], filename: str) -> None:
+def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
     with open(filename, 'w', encoding='utf8') as f:
         f.write('''<!DOCTYPE html>
 <html>
@@ -119,10 +119,10 @@ def write_html(games: list[Game], filename: str) -> None:
             f.write('<div class="cards_row">\n')
             for pile in ordered_piles:
                 pile_name = pile['Name']
-                top_card = pile['Cards'][0]
-                img_path = f'./list_of_cards_files/200px-{top_card}.jpg'.replace(' ', '_')
-                # f.write(f'  <div>{pile_name}</div>\n')
-                f.write(f'  <div><img alt="{pile_name}" src="{img_path}"/></div>\n')
+                top_card_name = pile['Cards'][0]
+                top_card = cards['CardShapedThings'][top_card_name]
+                image = top_card['Image']
+                f.write(f'  <div><img alt="{pile_name}" src="{image}"/></div>\n')
             f.write('</div>\n')
 
         f.write('</body>\n</html>\n')
@@ -157,7 +157,7 @@ def main() -> None:
 
         game_num += 1
 
-    write_html(games, 'games.html')
+    write_html(games, cards, 'games.html')
 
 if __name__ == '__main__':
     main()
