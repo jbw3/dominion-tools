@@ -100,11 +100,18 @@ def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
 <head>
 <title>Dominion Games</title>
 <style>
-.cards_row {
+h1 {
+  text-align: center;
+  font-family: "Times New Roman";
+  font-size: 28pt;
+  font-variant: small-caps;
+}
+.cards {
   display: grid;
   grid-template-columns: 210px 210px 210px 210px 210px;
+  place-content: center;
 }
-.cards_row div {
+.cards div {
   padding: 10px;
 }
 </style>
@@ -116,7 +123,7 @@ def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
         for i, game in enumerate(games):
             f.write(f'\n<h1>Game {i + 1}</h1>\n\n')
             ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
-            f.write('<div class="cards_row">\n')
+            f.write('<div class="cards">\n')
             for pile in ordered_piles:
                 pile_name = pile['Name']
                 top_card_name = pile['Cards'][0]
