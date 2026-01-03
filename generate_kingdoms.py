@@ -50,6 +50,7 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles:
         'Lookout',             # slows down games
         "Philosopher's Stone", # slows down games
         'Possession',          # slows down games and can be annoying
+        'Scrying Pool',        # slows down games
         'Clerk',               # slows down games
         'Rabble',              # slows down games
         'Vault',               # slows down games
