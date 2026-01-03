@@ -37,7 +37,10 @@ def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[in
 
     return tuple(key)
 
-def generate_kingdom(cards: dict[str, Any], expansions: set[str]) -> Game:
+def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles: set[str]|None=None) -> Game:
+    if exclude_piles is None:
+        exclude_piles = set()
+
     tournament_exclude_cards = {
         'Bureaucrat',          # not exciting
         'Militia',             # slows down games
@@ -76,7 +79,7 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str]) -> Game:
 
     kingdom_pile_options = []
     for pile in cards['KingdomPiles']:
-        if all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
+        if pile['Name'] not in exclude_piles and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
             kingdom_pile_options.append(pile)
 
     assert len(kingdom_pile_options) >= 10
@@ -103,8 +106,9 @@ def main() -> None:
     ]
 
     game_num = 1
+    exclude_piles: set[str] = set()
     for expansions in game_expansions:
-        game = generate_kingdom(cards, set(expansions))
+        game = generate_kingdom(cards, set(expansions), exclude_piles)
 
         expansion_names = ', '.join(expansions)
         print(f'Game {game_num} ({expansion_names}):')
@@ -112,6 +116,8 @@ def main() -> None:
             costs = '/'.join(cards['CardShapedThings'][card_name]['Cost'] for card_name in pile['Cards'])
             print(f"{pile['Name']} {costs}")
         print()
+
+        exclude_piles |= set(pile['Name'] for pile in game.kingdom_piles)
 
         game_num += 1
 
