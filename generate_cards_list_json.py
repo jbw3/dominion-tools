@@ -24,6 +24,7 @@ BASE_CARD_NAMES = {
     'Estate',
     'Duchy',
     'Province',
+    'Colony',
 }
 
 def is_base_card(card: dict[str, Any]) -> bool:
