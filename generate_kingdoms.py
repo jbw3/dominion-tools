@@ -126,7 +126,7 @@ h1 {
 ''')
 
         for i, game in enumerate(games):
-            f.write(f'\n<h1>Game {i + 1}</h1>\n\n')
+            f.write(f'\n<h1><img src="./list_of_cards_files/28px-VP.png"/>Game {i + 1}<img src="./list_of_cards_files/28px-VP.png"/></h1>\n\n')
             ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
             f.write('<div class="cards">\n')
             for pile in ordered_piles:
