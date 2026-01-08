@@ -12,7 +12,7 @@ class GameSettings:
 @dataclass
 class Game:
     kingdom_piles: list[dict[str, Any]]
-    events: list[dict[str, Any]]
+    events: list[str]
 
 def no_first_editions(card: dict[str, Any]) -> bool:
     edition = card['Set']['Edition']
@@ -47,11 +47,11 @@ def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[in
     top_card_name = pile['Cards'][0]
     return card_shaped_thing_comparison_key(top_card_name, cards)
 
-def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_piles: set[str]|None=None) -> Game:
+def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_names: set[str]|None=None) -> Game:
     random.seed(settings.seed)
 
-    if exclude_piles is None:
-        exclude_piles = set()
+    if exclude_names is None:
+        exclude_names = set()
 
     tournament_exclude_cards = {
         'Bureaucrat',          # not exciting
@@ -99,7 +99,7 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
 
     kingdom_pile_options = []
     for pile in cards['KingdomPiles']:
-        if pile['Name'] not in exclude_piles and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
+        if pile['Name'] not in exclude_names and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
             kingdom_pile_options.append(pile)
 
     assert len(kingdom_pile_options) >= 10
@@ -108,9 +108,9 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
     kingdom_piles = kingdom_pile_options[:10]
     kingdom_piles.sort(key=lambda pile: pile_comparison_key(pile, cards))
 
-    events_options = []
+    events_options: list[str] = []
     for event_name in cards['Events']:
-        if event_name not in exclude_piles and all(rule(cards['CardShapedThings'][event_name]) for rule in event_rules):
+        if event_name not in exclude_names and all(rule(cards['CardShapedThings'][event_name]) for rule in event_rules):
             events_options.append(event_name)
 
     random.shuffle(events_options)
@@ -198,9 +198,9 @@ def main() -> None:
 
     game_num = 1
     games: list[Game] = []
-    exclude_piles: set[str] = set()
+    exclude_names: set[str] = set()
     for settings in game_settings:
-        game = generate_kingdom(cards, settings, exclude_piles)
+        game = generate_kingdom(cards, settings, exclude_names)
         games.append(game)
 
         set_names = ', '.join(settings.sets)
@@ -210,7 +210,8 @@ def main() -> None:
             print(f"{pile['Name']} {costs}")
         print()
 
-        exclude_piles |= set(pile['Name'] for pile in game.kingdom_piles)
+        exclude_names |= set(pile['Name'] for pile in game.kingdom_piles)
+        exclude_names |= set(name for name in game.events)
 
         game_num += 1
 
