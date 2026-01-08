@@ -56,6 +56,8 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
     tournament_exclude_cards = {
         'Bureaucrat',          # not exciting
         'Militia',             # slows down games
+        'Masquerade',          # slows down games
+        'Patrol',              # slows down games
         'Secret Passage',      # slows down games
         'Swindler',            # slows down games and can be annoying
         'Torturer',            # slows down games and can be annoying
@@ -88,6 +90,7 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
         no_first_editions,
         lambda c: pick_sets(c, settings.sets),
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
+        lambda c: len(set(c['Types']).intersection({'Doom', 'Fate', 'Reserve'})) == 0,
     ]
 
     event_rules: list[Callable[[dict[str, Any]], bool]] = [
