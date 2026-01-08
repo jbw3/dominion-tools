@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import json
 import random
 from typing import Any, Callable
+import time
 
 @dataclass
 class GameSettings:
@@ -11,6 +12,7 @@ class GameSettings:
 @dataclass
 class Game:
     kingdom_piles: list[dict[str, Any]]
+    events: list[dict[str, Any]]
 
 def no_first_editions(card: dict[str, Any]) -> bool:
     edition = card['Set']['Edition']
@@ -85,6 +87,10 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
+    event_rules: list[Callable[[dict[str, Any]], bool]] = [
+        lambda c: pick_sets(c, settings.sets),
+    ]
+
     kingdom_pile_options = []
     for pile in cards['KingdomPiles']:
         if pile['Name'] not in exclude_piles and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
@@ -93,12 +99,19 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
     assert len(kingdom_pile_options) >= 10
 
     random.shuffle(kingdom_pile_options)
-
     kingdom_piles = kingdom_pile_options[:10]
-
     kingdom_piles.sort(key=lambda pile: pile_comparison_key(pile, cards))
 
-    game = Game(kingdom_piles)
+    events_options = []
+    for event_name in cards['Events']:
+        if event_name not in exclude_piles and all(rule(cards['CardShapedThings'][event_name]) for rule in event_rules):
+            events_options.append(event_name)
+
+    random.shuffle(events_options)
+    num_events = random.randint(0, 2)
+    events = events_options[:num_events]
+
+    game = Game(kingdom_piles, events)
     return game
 
 def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
@@ -118,12 +131,20 @@ h1 {
   font-size: 28pt;
   font-variant: small-caps;
 }
-.cards {
+.kingdom_piles {
   display: grid;
   grid-template-columns: 210px 210px 210px 210px 210px;
   place-content: center;
 }
-.cards div {
+.kingdom_piles div {
+  padding: 10px;
+}
+.landscapes {
+  display: grid;
+  grid-template-columns: auto auto;
+  place-content: center;
+}
+.landscapes div {
   padding: 10px;
 }
 </style>
@@ -135,7 +156,7 @@ h1 {
         for i, game in enumerate(games):
             f.write(f'\n<h1><img src="./list_of_cards_files/28px-VP.png"/>Game {i + 1}<img src="./list_of_cards_files/28px-VP.png"/></h1>\n\n')
             ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
-            f.write('<div class="cards">\n')
+            f.write('<div class="kingdom_piles">\n')
             for pile in ordered_piles:
                 pile_name = pile['Name']
                 top_card_name = pile['Cards'][0]
@@ -143,6 +164,14 @@ h1 {
                 link = top_card['Link']
                 image = top_card['Image']
                 f.write(f'  <div><a href="{link}"><img alt="{pile_name}" src="{image}"/></a></div>\n')
+            f.write('</div>\n')
+
+            f.write('<div class="landscapes">\n')
+            for event_name in game.events:
+                event = cards['CardShapedThings'][event_name]
+                link = event['Link']
+                image = event['Image']
+                f.write(f'  <div><a href="{link}"><img alt="{event_name}" src="{image}"/></a></div>\n')
             f.write('</div>\n')
 
         f.write('\n</body>\n</html>\n')
@@ -153,11 +182,11 @@ def main() -> None:
         cards: dict[str, Any] = json.load(f)
 
     game_settings = [
-        GameSettings(1, {'Base', 'Adventures'}),
-        GameSettings(2, {'Intrigue', 'Prosperity'}),
-        GameSettings(3, {'Seaside', 'Rising Sun'}),
-        GameSettings(4, {'Alchemy', 'Promo'}),
-        GameSettings(5, {'Empires', 'Nocturne'}),
+        GameSettings(time.time_ns(), {'Base', 'Adventures'}),
+        GameSettings(time.time_ns(), {'Intrigue', 'Prosperity'}),
+        GameSettings(time.time_ns(), {'Seaside', 'Rising Sun'}),
+        GameSettings(time.time_ns(), {'Alchemy', 'Promo'}),
+        GameSettings(time.time_ns(), {'Empires', 'Nocturne'}),
     ]
 
     game_num = 1
