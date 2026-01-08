@@ -4,6 +4,11 @@ import random
 from typing import Any, Callable
 
 @dataclass
+class GameSettings:
+    seed: int
+    sets: set[str]
+
+@dataclass
 class Game:
     kingdom_piles: list[dict[str, Any]]
 
@@ -11,8 +16,8 @@ def no_first_editions(card: dict[str, Any]) -> bool:
     edition = card['Set']['Edition']
     return edition is None or edition == '2E'
 
-def pick_expansions(card: dict[str, Any], expansions: set[str]) -> bool:
-    return card['Set']['Name'] in expansions
+def pick_sets(card: dict[str, Any], sets: set[str]) -> bool:
+    return card['Set']['Name'] in sets
 
 def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[int, int, int, str]:
     top_card_name = pile['Cards'][0]
@@ -37,7 +42,9 @@ def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[in
 
     return tuple(key)
 
-def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles: set[str]|None=None) -> Game:
+def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_piles: set[str]|None=None) -> Game:
+    random.seed(settings.seed)
+
     if exclude_piles is None:
         exclude_piles = set()
 
@@ -74,7 +81,7 @@ def generate_kingdom(cards: dict[str, Any], expansions: set[str], exclude_piles:
 
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
         no_first_editions,
-        lambda c: pick_expansions(c, expansions),
+        lambda c: pick_sets(c, settings.sets),
         lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
     ]
 
@@ -145,23 +152,23 @@ def main() -> None:
     with open(cards_list_filename, 'r', encoding='utf8') as f:
         cards: dict[str, Any] = json.load(f)
 
-    game_expansions = [
-        ['Base', 'Adventures'],
-        ['Intrigue', 'Prosperity'],
-        ['Seaside', 'Rising Sun'],
-        ['Alchemy', 'Promo'],
-        ['Empires', 'Nocturne'],
+    game_settings = [
+        GameSettings(1, {'Base', 'Adventures'}),
+        GameSettings(2, {'Intrigue', 'Prosperity'}),
+        GameSettings(3, {'Seaside', 'Rising Sun'}),
+        GameSettings(4, {'Alchemy', 'Promo'}),
+        GameSettings(5, {'Empires', 'Nocturne'}),
     ]
 
     game_num = 1
     games: list[Game] = []
     exclude_piles: set[str] = set()
-    for expansions in game_expansions:
-        game = generate_kingdom(cards, set(expansions), exclude_piles)
+    for settings in game_settings:
+        game = generate_kingdom(cards, settings, exclude_piles)
         games.append(game)
 
-        expansion_names = ', '.join(expansions)
-        print(f'Game {game_num} ({expansion_names}):')
+        set_names = ', '.join(settings.sets)
+        print(f'Game {game_num} ({set_names}):')
         for pile in game.kingdom_piles:
             costs = '/'.join(cards['CardShapedThings'][card_name]['Cost'] for card_name in pile['Cards'])
             print(f"{pile['Name']} {costs}")
