@@ -21,13 +21,12 @@ def no_first_editions(card: dict[str, Any]) -> bool:
 def pick_sets(card: dict[str, Any], sets: set[str]) -> bool:
     return card['Set']['Name'] in sets
 
-def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[int, int, int, str]:
-    top_card_name = pile['Cards'][0]
-    top_card = cards['CardShapedThings'][top_card_name]
+def card_shaped_thing_comparison_key(name: str, cards: dict[str, Any]) -> tuple[int, int, int, str]:
+    card_shaped_thing = cards['CardShapedThings'][name]
 
-    key = [0, 0, 0, top_card['Name']]
+    key = [0, 0, 0, card_shaped_thing['Name']]
 
-    cost_str = top_card['Cost']
+    cost_str = card_shaped_thing['Cost']
     cost_split = cost_str.split()
     for part in cost_split:
         if part[0] == '$':
@@ -43,6 +42,10 @@ def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[in
             assert False, f'Unknown cost part: {part}'
 
     return tuple(key)
+
+def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[int, int, int, str]:
+    top_card_name = pile['Cards'][0]
+    return card_shaped_thing_comparison_key(top_card_name, cards)
 
 def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_piles: set[str]|None=None) -> Game:
     random.seed(settings.seed)
@@ -110,6 +113,7 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_pile
     random.shuffle(events_options)
     num_events = random.randint(0, 2)
     events = events_options[:num_events]
+    events.sort(key=lambda event: card_shaped_thing_comparison_key(event, cards))
 
     game = Game(kingdom_piles, events)
     return game
