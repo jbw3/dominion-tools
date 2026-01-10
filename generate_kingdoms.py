@@ -102,7 +102,7 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_name
         if pile['Name'] not in exclude_names and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
             kingdom_pile_options.append(pile)
 
-    assert len(kingdom_pile_options) >= 10
+    assert len(kingdom_pile_options) >= 10, f'options: {", ".join(pile["Name"] for pile in kingdom_pile_options)}'
 
     random.shuffle(kingdom_pile_options)
     kingdom_piles = kingdom_pile_options[:10]
@@ -194,6 +194,7 @@ def main() -> None:
         GameSettings(time.time_ns(), {'Seaside', 'Rising Sun'}),
         GameSettings(time.time_ns(), {'Alchemy', 'Promo'}),
         GameSettings(time.time_ns(), {'Empires', 'Nocturne'}),
+        GameSettings(time.time_ns(), {'Cornucopia & Guilds'}),
     ]
 
     game_num = 1
