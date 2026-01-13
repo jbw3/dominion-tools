@@ -1,7 +1,7 @@
 from html.parser import HTMLParser
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, IO
 
 def create_card() -> dict[str, Any]:
     return {
@@ -290,38 +290,54 @@ class DominionCardsParser(HTMLParser):
         elif self.parsing_th:
             self.headers.append(data.strip())
 
+def to_python_const(name: str) -> str:
+    return name.upper().replace("'", '').replace(' ', '_').replace('-', '_')
+
+def gen_python_card_shaped_things_consts(io: IO[str], cards: dict[str, Any]) -> None:
+    for card_shaped_thing in cards['CardShapedThings'].values():
+        name = card_shaped_thing['Name']
+        const_name = to_python_const(name)
+        types = '{' + ', '.join(f'"{t}"' for t in card_shaped_thing['Types']) + '}'
+        cost_str = card_shaped_thing['Cost']
+        cost_split = cost_str.split()
+        cost_init_parts: list[str] = []
+        for part in cost_split:
+            if part[0] == '$':
+                s = part[1:]
+                if s[-1] in {'*', '+'}:
+                    s = s[:-1]
+                cost_init_parts.append(f'coins={s}')
+            elif part[-1] == 'P':
+                cost_init_parts.append('potions=' + ('1' if len(part) == 1 else part[:-1]))
+            elif part[-1] == 'D':
+                cost_init_parts.append('debt=' + ('1' if len(part) == 1 else part[:-1]))
+            else:
+                assert False, f'Unknown cost part: {part}'
+        cost_init_str = ', '.join(cost_init_parts)
+        text = card_shaped_thing['Text'].replace('"', '\\"')
+        link = card_shaped_thing['Link']
+
+        io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}")\n')
+
+def gen_python_card_shaped_things_dict(io: IO[str], cards: dict[str, Any]) -> None:
+    io.write('CARD_SHAPED_THINGS = {\n')
+
+    for card_shaped_thing in cards['CardShapedThings'].values():
+        name = card_shaped_thing['Name']
+        const_name = to_python_const(name)
+        io.write(f'    "{name}": {const_name},\n')
+
+    io.write('}\n')
+
 def gen_python(cards: dict[str, Any]) -> None:
     path = Path('dominion') / 'card_shaped_things.py'
     with path.open('w') as f:
         f.write('from base import CardShapedThing, Cost\n\n')
 
-        f.write('CARD_SHAPED_THINGS = {\n')
+        gen_python_card_shaped_things_consts(f, cards)
+        f.write('\n')
 
-        for card_shaped_thing in cards['CardShapedThings'].values():
-            name = card_shaped_thing['Name']
-            types = '{' + ', '.join(f'"{t}"' for t in card_shaped_thing['Types']) + '}'
-            cost_str = card_shaped_thing['Cost']
-            cost_split = cost_str.split()
-            cost_init_parts: list[str] = []
-            for part in cost_split:
-                if part[0] == '$':
-                    s = part[1:]
-                    if s[-1] in {'*', '+'}:
-                        s = s[:-1]
-                    cost_init_parts.append(f'coins={s}')
-                elif part[-1] == 'P':
-                    cost_init_parts.append('potions=' + ('1' if len(part) == 1 else part[:-1]))
-                elif part[-1] == 'D':
-                    cost_init_parts.append('debt=' + ('1' if len(part) == 1 else part[:-1]))
-                else:
-                    assert False, f'Unknown cost part: {part}'
-            cost_init_str = ', '.join(cost_init_parts)
-            text = card_shaped_thing['Text'].replace('"', '\\"')
-            link = card_shaped_thing['Link']
-
-            f.write(f'    "{name}": CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}"),\n')
-
-        f.write('}\n')
+        gen_python_card_shaped_things_dict(f, cards)
 
 def main() -> None:
     cards_list_filename = 'list_of_cards.html'
