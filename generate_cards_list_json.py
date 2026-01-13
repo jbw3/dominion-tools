@@ -299,6 +299,7 @@ def gen_python(cards: dict[str, Any]) -> None:
 
         for card_shaped_thing in cards['CardShapedThings'].values():
             name = card_shaped_thing['Name']
+            types = '{' + ', '.join(f'"{t}"' for t in card_shaped_thing['Types']) + '}'
             cost_str = card_shaped_thing['Cost']
             cost_split = cost_str.split()
             cost_init_parts: list[str] = []
@@ -318,7 +319,7 @@ def gen_python(cards: dict[str, Any]) -> None:
             text = card_shaped_thing['Text'].replace('"', '\\"')
             link = card_shaped_thing['Link']
 
-            f.write(f'    "{name}": CardShapedThing("{name}", Cost({cost_init_str}), "{text}", "{link}"),\n')
+            f.write(f'    "{name}": CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}"),\n')
 
         f.write('}\n')
 
