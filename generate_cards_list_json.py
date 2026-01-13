@@ -291,7 +291,21 @@ class DominionCardsParser(HTMLParser):
             self.headers.append(data.strip())
 
 def to_python_const(name: str) -> str:
-    return name.upper().replace("'", '').replace(' ', '_').replace('-', '_')
+    const_name = ''
+    last_is_lower = False
+    for char in name:
+        if char == "'":
+            pass
+        elif char in {' ', '-'}:
+            const_name += '_'
+        else:
+            if char.isupper() and last_is_lower:
+                const_name += '_'
+            const_name += char.upper()
+
+        last_is_lower = char.islower()
+
+    return const_name
 
 def gen_python_card_shaped_things_consts(io: IO[str], cards: dict[str, Any]) -> None:
     for card_shaped_thing in cards['CardShapedThings'].values():
@@ -320,7 +334,7 @@ def gen_python_card_shaped_things_consts(io: IO[str], cards: dict[str, Any]) -> 
         io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}")\n')
 
 def gen_python_card_shaped_things_dict(io: IO[str], cards: dict[str, Any]) -> None:
-    io.write('CARD_SHAPED_THINGS = {\n')
+    io.write('\nCARD_SHAPED_THINGS = {\n')
 
     for card_shaped_thing in cards['CardShapedThings'].values():
         name = card_shaped_thing['Name']
@@ -329,15 +343,43 @@ def gen_python_card_shaped_things_dict(io: IO[str], cards: dict[str, Any]) -> No
 
     io.write('}\n')
 
+def gen_python_list(io: IO[str], cards: dict[str, Any], list_name: str) -> None:
+    list_name_const = to_python_const(list_name)
+    io.write(f'\n{list_name_const} = [\n')
+
+    for name in cards[list_name]:
+        const_name = to_python_const(name)
+        io.write(f'    {const_name},\n')
+
+    io.write(']\n')
+
 def gen_python(cards: dict[str, Any]) -> None:
     path = Path('dominion') / 'card_shaped_things.py'
     with path.open('w') as f:
         f.write('from base import CardShapedThing, Cost\n\n')
 
         gen_python_card_shaped_things_consts(f, cards)
-        f.write('\n')
-
         gen_python_card_shaped_things_dict(f, cards)
+        for list_name in [
+            'Base',
+            'NonSupply',
+            'Shelters',
+            'Ruins',
+            'Events',
+            'Landmarks',
+            'Heirlooms',
+            'Zombies',
+            'Boons',
+            'Hexes',
+            'States',
+            'Projects',
+            'Artifacts',
+            'Ways',
+            'Allies',
+            'Traits',
+            'Prophecies',
+        ]:
+            gen_python_list(f, cards, list_name)
 
 def main() -> None:
     cards_list_filename = 'list_of_cards.html'
