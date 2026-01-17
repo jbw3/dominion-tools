@@ -11,6 +11,7 @@ class GameSettings:
 
 @dataclass
 class Game:
+    settings: GameSettings
     kingdom_piles: list[dict[str, Any]]
     landscapes: list[str]
 
@@ -142,7 +143,7 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_name
 
     landscapes.sort(key=lambda landscape: card_shaped_thing_comparison_key(landscape, cards))
 
-    game = Game(kingdom_piles, landscapes)
+    game = Game(settings, kingdom_piles, landscapes)
     return game
 
 def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
@@ -161,6 +162,10 @@ h1 {
   font-family: "Times New Roman";
   font-size: 28pt;
   font-variant: small-caps;
+}
+.seed {
+  text-align: center;
+  font-size: 14pt;
 }
 .kingdom_piles {
   display: grid;
@@ -186,6 +191,7 @@ h1 {
 
         for i, game in enumerate(games):
             f.write(f'\n<h1><img src="./list_of_cards_files/28px-VP.png"/>Game {i + 1}<img src="./list_of_cards_files/28px-VP.png"/></h1>\n\n')
+            f.write(f'<div class="seed"><p>seed: {game.settings.seed}</p></div>\n')
             ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
             f.write('<div class="kingdom_piles">\n')
             for pile in ordered_piles:
@@ -213,7 +219,7 @@ def main() -> None:
         cards: dict[str, Any] = json.load(f)
 
     game_settings = [
-        GameSettings(time.time_ns(), {'Base', 'Adventures'}),
+        GameSettings(1768670846218130800, {'Base', 'Adventures'}),
         GameSettings(time.time_ns(), {'Intrigue', 'Prosperity'}),
         GameSettings(time.time_ns(), {'Seaside', 'Rising Sun'}),
         GameSettings(time.time_ns(), {'Alchemy', 'Promo'}),
