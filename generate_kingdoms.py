@@ -79,12 +79,32 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_name
         'Envoy',               # slows down games
     }
 
+    tournament_exclude_events = {
+        'Continue',
+        'Foresight',
+        'Kintsugi',
+        'Receive Tribute',
+    }
+
     adventure_token_cards = {
         'Bridge Troll',
         'Giant',
         'Peasant',
         'Ranger',
         'Relic',
+    }
+
+    adventure_token_events = {
+        'Borrow',
+        'Ferry',
+        'Plan',
+        'Pilgrimage',
+        'Ball',
+        'Raid',
+        'Seaway',
+        'Lost Arts',
+        'Training',
+        'Pathfinding',
     }
 
     kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
@@ -95,7 +115,8 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_name
     ]
 
     event_rules: list[Callable[[dict[str, Any]], bool]] = [
-        lambda c: pick_sets(c, settings.sets),
+        lambda e: pick_sets(e, settings.sets),
+        lambda e: e['Name'] not in tournament_exclude_events and e['Name'] not in adventure_token_events,
     ]
 
     landmark_rules: list[Callable[[dict[str, Any]], bool]] = [
