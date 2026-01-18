@@ -12,3 +12,11 @@ class CardShapedThing:
         self.cost = cost
         self.text = text
         self.link = link
+
+class Pile:
+    def __init__(self, cards: list[CardShapedThing], name: str|None=None):
+        self.cards = cards
+        if name is not None:
+            self.name = name
+        else:
+            self.name = '/'.join(c.name for c in self.cards)

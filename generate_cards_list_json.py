@@ -353,10 +353,22 @@ def gen_python_list(io: IO[str], cards: dict[str, Any], list_name: str) -> None:
 
     io.write(']\n')
 
+def gen_python_kingdom_piles(io: IO[str], kingdom_piles: list[dict[str, Any]]) -> None:
+    io.write(f'\nKINGDOM_PILES = [\n')
+
+    for pile in kingdom_piles:
+        cards_list = ', '.join(to_python_const(c) for c in pile['Cards'])
+        if len(pile['Cards']) == 1:
+            io.write(f'    Pile([{cards_list}]),\n')
+        else:
+            io.write(f'    Pile([{cards_list}], "{pile["Name"]}"),\n')
+
+    io.write(']\n')
+
 def gen_python(cards: dict[str, Any]) -> None:
     path = Path('dominion') / 'card_shaped_things.py'
     with path.open('w', encoding='utf8') as f:
-        f.write('from .base import CardShapedThing, Cost\n\n')
+        f.write('from .base import CardShapedThing, Cost, Pile\n\n')
 
         gen_python_card_shaped_things_consts(f, cards)
         gen_python_card_shaped_things_dict(f, cards)
@@ -380,6 +392,8 @@ def gen_python(cards: dict[str, Any]) -> None:
             'Prophecies',
         ]:
             gen_python_list(f, cards, list_name)
+
+        gen_python_kingdom_piles(f, cards['KingdomPiles'])
 
 def main() -> None:
     cards_list_filename = 'list_of_cards.html'
