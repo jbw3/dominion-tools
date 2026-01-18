@@ -1,4 +1,5 @@
 .vscode
+__pycache__
 *.json
 *.tsv
 list_of_cards_files
