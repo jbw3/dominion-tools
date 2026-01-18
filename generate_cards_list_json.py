@@ -355,7 +355,7 @@ def gen_python_list(io: IO[str], cards: dict[str, Any], list_name: str) -> None:
 
 def gen_python(cards: dict[str, Any]) -> None:
     path = Path('dominion') / 'card_shaped_things.py'
-    with path.open('w') as f:
+    with path.open('w', encoding='utf8') as f:
         f.write('from base import CardShapedThing, Cost\n\n')
 
         gen_python_card_shaped_things_consts(f, cards)
