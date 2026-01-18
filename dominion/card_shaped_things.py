@@ -1,4 +1,4 @@
-from base import CardShapedThing, Cost
+from .base import CardShapedThing, Cost
 
 ADVENTURER = CardShapedThing("Adventurer", {"Action"}, Cost(coins=6), "Reveal cards from your deck until you reveal 2 Treasure cards. Put those Treasure cards into your hand and discard the other revealed cards.", "https://wiki.dominionstrategy.com/index.php/Adventurer")
 ARTISAN = CardShapedThing("Artisan", {"Action"}, Cost(coins=6), "Gain a card to your hand costing up to $5.Put a card from your hand onto your deck.", "https://wiki.dominionstrategy.com/index.php/Artisan")
