@@ -330,8 +330,9 @@ def gen_python_card_shaped_things_consts(io: IO[str], cards: dict[str, Any]) -> 
         cost_init_str = ', '.join(cost_init_parts)
         text = card_shaped_thing['Text'].replace('"', '\\"')
         link = card_shaped_thing['Link']
+        image = card_shaped_thing['Image']
 
-        io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}")\n')
+        io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}", "{image}")\n')
 
 def gen_python_card_shaped_things_dict(io: IO[str], cards: dict[str, Any]) -> None:
     io.write('\nCARD_SHAPED_THINGS = {\n')

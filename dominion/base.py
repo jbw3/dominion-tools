@@ -6,12 +6,13 @@ class Cost(NamedTuple):
     debt: int = 0
 
 class CardShapedThing:
-    def __init__(self, name: str, types: set[str], cost: Cost, text: str, link: str):
+    def __init__(self, name: str, types: set[str], cost: Cost, text: str, link: str, image: str):
         self.name = name
         self.types = types
         self.cost = cost
         self.text = text
         self.link = link
+        self.image = image
 
 class Pile:
     def __init__(self, cards: list[CardShapedThing], name: str|None=None):
