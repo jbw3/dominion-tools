@@ -5,6 +5,17 @@ class Cost(NamedTuple):
     potions: int = 0
     debt: int = 0
 
+    def __str__(self) -> str:
+        parts: list[str] = []
+        if self.coins > 0:
+            parts.append(f'${self.coins}')
+        if self.potions > 0:
+            parts.append('P')
+        if self.debt > 0:
+            parts.append(f'{self.debt}D')
+
+        return ' '.join(parts)
+
 class Set(NamedTuple):
     name: str
     edition: str|None = None
