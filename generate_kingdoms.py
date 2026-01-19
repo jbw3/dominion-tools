@@ -1,7 +1,13 @@
 from dataclasses import dataclass
-import json
+from dominion.base import CardShapedThing, Cost, Pile
+from dominion.card_shaped_things import (
+    EVENTS,
+    KINGDOM_PILES,
+    LANDMARKS,
+    PROPHECIES,
+)
 import random
-from typing import Any, Callable
+from typing import Callable
 import time
 
 @dataclass
@@ -12,43 +18,24 @@ class GameSettings:
 @dataclass
 class Game:
     settings: GameSettings
-    kingdom_piles: list[dict[str, Any]]
-    landscapes: list[str]
+    kingdom_piles: list[Pile]
+    landscapes: list[CardShapedThing]
 
-def no_first_editions(card: dict[str, Any]) -> bool:
-    edition = card['Set']['Edition']
-    return edition is None or edition == '2E'
+def no_first_editions(card_shaped_thing: CardShapedThing) -> bool:
+    edition = card_shaped_thing.set.edition
+    return edition is None or edition != '1E'
 
-def pick_sets(card: dict[str, Any], sets: set[str]) -> bool:
-    return card['Set']['Name'] in sets
+def pick_sets(card_shaped_thing: CardShapedThing, sets: set[str]) -> bool:
+    return card_shaped_thing.set.name in sets
 
-def card_shaped_thing_comparison_key(name: str, cards: dict[str, Any]) -> tuple[int, int, int, str]:
-    card_shaped_thing = cards['CardShapedThings'][name]
+def card_shaped_thing_comparison_key(card_shaped_thing: CardShapedThing) -> tuple[Cost, str]:
+    return (card_shaped_thing.cost, card_shaped_thing.name)
 
-    key = [0, 0, 0, card_shaped_thing['Name']]
+def pile_comparison_key(pile: Pile) -> tuple[Cost, str]:
+    top_card = pile.cards[0]
+    return card_shaped_thing_comparison_key(top_card)
 
-    cost_str = card_shaped_thing['Cost']
-    cost_split = cost_str.split()
-    for part in cost_split:
-        if part[0] == '$':
-            s = part[1:]
-            if s[-1] in {'*', '+'}:
-                s = s[:-1]
-            key[0] = int(s)
-        elif part[-1] == 'P':
-            key[1] = 1 if len(part) == 1 else int(part[:-1])
-        elif part[-1] == 'D':
-            key[2] = 1 if len(part) == 1 else int(part[:-1])
-        else:
-            assert False, f'Unknown cost part: {part}'
-
-    return tuple(key)
-
-def pile_comparison_key(pile: dict[str, Any], cards: dict[str, Any]) -> tuple[int, int, int, str]:
-    top_card_name = pile['Cards'][0]
-    return card_shaped_thing_comparison_key(top_card_name, cards)
-
-def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_names: set[str]|None=None) -> Game:
+def generate_kingdom(settings: GameSettings, exclude_names: set[str]|None=None) -> Game:
     random.seed(settings.seed)
 
     if exclude_names is None:
@@ -107,67 +94,67 @@ def generate_kingdom(cards: dict[str, Any], settings: GameSettings, exclude_name
         'Pathfinding',
     }
 
-    kingdom_rules: list[Callable[[dict[str, Any]], bool]] = [
+    kingdom_rules: list[Callable[[CardShapedThing], bool]] = [
         no_first_editions,
         lambda c: pick_sets(c, settings.sets),
-        lambda c: c['Name'] not in tournament_exclude_cards and c['Name'] not in adventure_token_cards,
-        lambda c: len(set(c['Types']).intersection({'Doom', 'Fate', 'Reserve'})) == 0,
+        lambda c: c.name not in tournament_exclude_cards and c.name not in adventure_token_cards,
+        lambda c: len(c.types.intersection({'Doom', 'Fate', 'Reserve'})) == 0,
     ]
 
-    event_rules: list[Callable[[dict[str, Any]], bool]] = [
+    event_rules: list[Callable[[CardShapedThing], bool]] = [
         lambda e: pick_sets(e, settings.sets),
-        lambda e: e['Name'] not in tournament_exclude_events and e['Name'] not in adventure_token_events,
+        lambda e: e.name not in tournament_exclude_events and e.name not in adventure_token_events,
     ]
 
-    landmark_rules: list[Callable[[dict[str, Any]], bool]] = [
+    landmark_rules: list[Callable[[CardShapedThing], bool]] = [
         lambda c: pick_sets(c, settings.sets),
     ]
 
-    prophecy_rules: list[Callable[[dict[str, Any]], bool]] = [
+    prophecy_rules: list[Callable[[CardShapedThing], bool]] = [
     ]
 
-    kingdom_pile_options = []
-    for pile in cards['KingdomPiles']:
-        if pile['Name'] not in exclude_names and all(rule(cards['CardShapedThings'][card_name]) for rule in kingdom_rules for card_name in pile['Cards']):
+    kingdom_pile_options: list[Pile] = []
+    for pile in KINGDOM_PILES:
+        if pile.name not in exclude_names and all(rule(card) for rule in kingdom_rules for card in pile.cards):
             kingdom_pile_options.append(pile)
 
-    assert len(kingdom_pile_options) >= 10, f'options: {", ".join(pile["Name"] for pile in kingdom_pile_options)}'
+    assert len(kingdom_pile_options) >= 10, f'options: {", ".join(pile.name for pile in kingdom_pile_options)}'
 
     random.shuffle(kingdom_pile_options)
     kingdom_piles = kingdom_pile_options[:10]
-    kingdom_piles.sort(key=lambda pile: pile_comparison_key(pile, cards))
+    kingdom_piles.sort(key=lambda pile: pile_comparison_key(pile))
 
-    landscapes: list[str] = []
+    landscapes: list[CardShapedThing] = []
 
-    events_options: list[str] = []
-    for event_name in cards['Events']:
-        if event_name not in exclude_names and all(rule(cards['CardShapedThings'][event_name]) for rule in event_rules):
-            events_options.append(event_name)
+    events_options: list[CardShapedThing] = []
+    for event in EVENTS:
+        if event.name not in exclude_names and all(rule(event) for rule in event_rules):
+            events_options.append(event)
     random.shuffle(events_options)
     num_events = random.randint(0, 2)
     landscapes.extend(events_options[:num_events])
 
-    landmarks_options: list[str] = []
-    for landmark_name in cards['Landmarks']:
-        if landmark_name not in exclude_names and all(rule(cards['CardShapedThings'][landmark_name]) for rule in landmark_rules):
-            landmarks_options.append(landmark_name)
+    landmarks_options: list[CardShapedThing] = []
+    for landmark in LANDMARKS:
+        if landmark.name not in exclude_names and all(rule(landmark) for rule in landmark_rules):
+            landmarks_options.append(landmark)
     random.shuffle(landmarks_options)
     num_landmarks = random.randint(0, 2)
     landscapes.extend(landmarks_options[:num_landmarks])
 
-    if any('Omen' in cards['CardShapedThings'][card_name]['Types'] for pile in kingdom_piles for card_name in pile['Cards']):
-        prophecies_options: list[str] = []
-        for prophecy_name in cards['Prophecies']:
-            if prophecy_name not in exclude_names and all(rule(cards['CardShapedThings'][prophecy_name]) for rule in prophecy_rules):
-                prophecies_options.append(prophecy_name)
+    if any('Omen' in card.types for pile in kingdom_piles for card in pile.cards):
+        prophecies_options: list[CardShapedThing] = []
+        for prophecy in PROPHECIES:
+            if prophecy.name not in exclude_names and all(rule(prophecy) for rule in prophecy_rules):
+                prophecies_options.append(prophecy)
         landscapes.append(random.choice(prophecies_options))
 
-    landscapes.sort(key=lambda landscape: card_shaped_thing_comparison_key(landscape, cards))
+    landscapes.sort(key=lambda landscape: card_shaped_thing_comparison_key(landscape))
 
     game = Game(settings, kingdom_piles, landscapes)
     return game
 
-def write_html(games: list[Game], cards: dict[str, Any], filename: str) -> None:
+def write_html(games: list[Game], filename: str) -> None:
     with open(filename, 'w', encoding='utf8') as f:
         f.write('''<!DOCTYPE html>
 <html>
@@ -216,29 +203,22 @@ h1 {
             ordered_piles = game.kingdom_piles[5:] + game.kingdom_piles[:5]
             f.write('<div class="kingdom_piles">\n')
             for pile in ordered_piles:
-                pile_name = pile['Name']
-                top_card_name = pile['Cards'][0]
-                top_card = cards['CardShapedThings'][top_card_name]
-                link = top_card['Link']
-                image = top_card['Image']
-                f.write(f'  <div><a href="{link}"><img alt="{pile_name}" src="{image}"/></a></div>\n')
+                top_card = pile.cards[0]
+                link = top_card.link
+                image = top_card.image
+                f.write(f'  <div><a href="{link}"><img alt="{pile.name}" src="{image}"/></a></div>\n')
             f.write('</div>\n')
 
             f.write('<div class="landscapes">\n')
-            for landscape_name in game.landscapes:
-                event = cards['CardShapedThings'][landscape_name]
-                link = event['Link']
-                image = event['Image']
-                f.write(f'  <div><a href="{link}"><img alt="{landscape_name}" src="{image}"/></a></div>\n')
+            for landscape in game.landscapes:
+                link = landscape.link
+                image = landscape.image
+                f.write(f'  <div><a href="{link}"><img alt="{landscape.name}" src="{image}"/></a></div>\n')
             f.write('</div>\n')
 
         f.write('\n</body>\n</html>\n')
 
 def main() -> None:
-    cards_list_filename = 'dominion_cards.json'
-    with open(cards_list_filename, 'r', encoding='utf8') as f:
-        cards: dict[str, Any] = json.load(f)
-
     game_settings = [
         GameSettings(1768670846218130800, {'Base', 'Adventures'}),
         GameSettings(time.time_ns(), {'Intrigue', 'Prosperity'}),
@@ -252,22 +232,22 @@ def main() -> None:
     games: list[Game] = []
     exclude_names: set[str] = set()
     for settings in game_settings:
-        game = generate_kingdom(cards, settings, exclude_names)
+        game = generate_kingdom(settings, exclude_names)
         games.append(game)
 
         set_names = ', '.join(settings.sets)
         print(f'Game {game_num} ({set_names}):')
         for pile in game.kingdom_piles:
-            costs = '/'.join(cards['CardShapedThings'][card_name]['Cost'] for card_name in pile['Cards'])
-            print(f"{pile['Name']} {costs}")
+            costs = '/'.join(str(card.cost) for card in pile.cards)
+            print(f"{pile.name} {costs}")
         print()
 
-        exclude_names |= set(pile['Name'] for pile in game.kingdom_piles)
-        exclude_names |= set(name for name in game.landscapes)
+        exclude_names |= set(pile.name for pile in game.kingdom_piles)
+        exclude_names |= set(landscape.name for landscape in game.landscapes)
 
         game_num += 1
 
-    write_html(games, cards, 'games.html')
+    write_html(games, 'games.html')
 
 if __name__ == '__main__':
     main()
