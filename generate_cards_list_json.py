@@ -328,11 +328,18 @@ def gen_python_card_shaped_things_consts(io: IO[str], cards: dict[str, Any]) -> 
             else:
                 assert False, f'Unknown cost part: {part}'
         cost_init_str = ', '.join(cost_init_parts)
+        s = card_shaped_thing['Set']
+        set_name = '"' + s['Name'] + '"'
+        set_edition = s['Edition']
+        if set_edition is None:
+            set_init_str = f'Set({set_name})'
+        else:
+            set_init_str = f'Set({set_name}, "{set_edition}")'
         text = card_shaped_thing['Text'].replace('"', '\\"')
         link = card_shaped_thing['Link']
         image = card_shaped_thing['Image']
 
-        io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), "{text}", "{link}", "{image}")\n')
+        io.write(f'{const_name} = CardShapedThing("{name}", {types}, Cost({cost_init_str}), {set_init_str}, "{text}", "{link}", "{image}")\n')
 
 def gen_python_card_shaped_things_dict(io: IO[str], cards: dict[str, Any]) -> None:
     io.write('\nCARD_SHAPED_THINGS = {\n')
@@ -369,7 +376,7 @@ def gen_python_kingdom_piles(io: IO[str], kingdom_piles: list[dict[str, Any]]) -
 def gen_python(cards: dict[str, Any]) -> None:
     path = Path('dominion') / 'card_shaped_things.py'
     with path.open('w', encoding='utf8') as f:
-        f.write('from .base import CardShapedThing, Cost, Pile\n\n')
+        f.write('from .base import CardShapedThing, Cost, Pile, Set\n\n')
 
         gen_python_card_shaped_things_consts(f, cards)
         gen_python_card_shaped_things_dict(f, cards)

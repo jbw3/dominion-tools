@@ -5,11 +5,16 @@ class Cost(NamedTuple):
     potions: int = 0
     debt: int = 0
 
+class Set(NamedTuple):
+    name: str
+    edition: str|None = None
+
 class CardShapedThing:
-    def __init__(self, name: str, types: set[str], cost: Cost, text: str, link: str, image: str):
+    def __init__(self, name: str, types: set[str], cost: Cost, set: Set, text: str, link: str, image: str):
         self.name = name
         self.types = types
         self.cost = cost
+        self.set = set
         self.text = text
         self.link = link
         self.image = image
