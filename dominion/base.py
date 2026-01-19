@@ -19,6 +19,9 @@ class Cost:
     def debt(self) -> int:
         return self._values.debt
 
+    def __repr__(self) -> str:
+        return f'Cost({self.coins}, {self.potions}, {self.debt})'
+
     def __str__(self) -> str:
         parts: list[str] = []
         if self.coins > 0:
