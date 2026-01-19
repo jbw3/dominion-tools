@@ -1,9 +1,23 @@
+from collections import namedtuple
 from typing import NamedTuple
 
-class Cost(NamedTuple):
-    coins: int = 0
-    potions: int = 0
-    debt: int = 0
+class Cost:
+    Values = namedtuple('Values', ['coins', 'potions', 'debt'])
+
+    def __init__(self, coins: int=0, potions: int=0, debt: int=0):
+        self._values = Cost.Values(coins, potions, debt)
+
+    @property
+    def coins(self) -> int:
+        return self._values.coins
+
+    @property
+    def potions(self) -> int:
+        return self._values.potions
+
+    @property
+    def debt(self) -> int:
+        return self._values.debt
 
     def __str__(self) -> str:
         parts: list[str] = []
@@ -15,6 +29,51 @@ class Cost(NamedTuple):
             parts.append(f'{self.debt}D')
 
         return ' '.join(parts)
+
+    def __hash__(self) -> int:
+        return hash(self._values)
+
+    def __eq__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values == Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values == value._values
+        raise TypeError(f"'==' not supported between instances of 'Cost' and '{type(value)}'")
+
+    def __ne__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values != Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values != value._values
+        raise TypeError(f"'!=' not supported between instances of 'Cost' and '{type(value)}'")
+
+    def __lt__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values < Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values < value._values
+        raise TypeError(f"'<' not supported between instances of 'Cost' and '{type(value)}'")
+
+    def __le__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values <= Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values <= value._values
+        raise TypeError(f"'<=' not supported between instances of 'Cost' and '{type(value)}'")
+
+    def __gt__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values > Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values > value._values
+        raise TypeError(f"'>' not supported between instances of 'Cost' and '{type(value)}'")
+
+    def __ge__(self, value: object) -> bool:
+        if isinstance(value, int):
+            return self._values >= Cost(value)._values
+        elif isinstance(value, Cost):
+            return self._values >= value._values
+        raise TypeError(f"'>=' not supported between instances of 'Cost' and '{type(value)}'")
 
 class Set(NamedTuple):
     name: str
